@@ -4,3 +4,4 @@ sudo apt-add-repository --yes --update ppa:ansible/ansible
 sudo apt install ansible
 ansible --version
 ansible-galaxy collection install azure.azcollection
+sudo apt-get install python-pip
