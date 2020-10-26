@@ -1,0 +1,85 @@
+---
+- hosts: localhost
+  become: yes
+  tasks:
+  - name: Update and upgrade apt packages
+    apt:
+      upgrade: yes
+      update_cache: yes
+      cache_valid_time: 86400 #One day
+  - name: "Install Java"
+    apt:
+      name: openjdk-8-jdk
+      state: present
+- 
+  become: true
+  hosts: localhost
+  tasks:
+  - name: add group "tomcat"
+    group: name=tomcat
+  - name: add user "tomcat"
+    user: name=tomcat group=tomcat home=/usr/share/tomcat createhome=no
+    become: True
+    become_method: sudo
+  - name: Download Tomcat
+    get_url: url=https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.49/bin/apache-tomcat-8.5.49.tar.gz dest=/opt/apache-tomcat-8.5.49.tar.gz
+    become: yes
+    become_user: root
+  - name: unarchive Tomcat
+    unarchive:
+      src: /opt/apache-tomcat-8.5.49.tar.gz
+      dest: /usr/local
+      remote_src: yes
+    become: yes
+    become_user: root
+  - name: change file ownership of extracted file
+    file:
+      path: /usr/local/apache-tomcat-8.5.49
+      owner: tomcat
+      group: tomcat
+      recurse: yes
+      state: directory
+  - name: make tomcat service
+    file: path=/etc/systemd/system/tomcat.service state=touch
+  - name: edit tomcat.service
+    blockinfile:
+      dest: /etc/systemd/system/tomcat.service
+      insertafter:
+      block: |
+        [Unit]
+        Description = Apache Tomcat 8
+        After = syslog.target network.target
+        [Service]
+        User = tomcat
+        Group = tomcat
+        Type = forking
+        Environment=JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre
+        Environment=CATALINA_PID=/usr/local/apache-tomcat-8.5.49/tomcat.pid
+        Environment=CATALINA_HOME=/usr/local/apache-tomcat-8.5.49
+        Environment=CATALINA_BASE=/usr/local/apache-tomcat-8.5.49
+        Environment='CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC'
+        Environment='JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom'
+        PIDFile =/usr/local/apache-tomcat-8.5.49/tomcat.pid
+        RemainAfterExit = yes
+        ExecStart =/usr/local/apache-tomcat-8.5.49/bin/startup.sh
+        ExecStop =/usr/local/apache-tomcat-8.5.49/bin/shutdown.sh
+        ExecReStart =/usr/local/apache-tomcat-8.5.49/bin/shutdown.sh;/usr/local/apache-tomcat-8.5.49/bin/startup.sh
+        [Install]
+        WantedBy = multi-user.target
+  - name: change Tomcat service mode to 0755
+    file: path=/etc/systemd/system/tomcat.service mode=0755
+  - name: edit tomcat user xml
+    file:
+      dest: /usr/local/apache-tomcat-8.5.49/conf/tomcat-users.xml
+      insertafter:<tomcat-users>
+      block: |
+        <role rolename = "admin-gui" />
+        <role rolename = "manager-gui" />
+        <user username = "tomcat" password = "tomcat" roles = "admin-gui, manager-gui" />
+  - name: start tomcat service
+    systemd:
+      name: tomcat.service
+      state: started
+      daemon_reload: yes
+      enabled: yes
+    become: yes
