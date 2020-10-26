@@ -71,7 +71,7 @@
   - name: edit tomcat user xml
     file:
       dest: /usr/local/apache-tomcat-8.5.49/conf/tomcat-users.xml
-      insertafter:<tomcat-users>
+      insertafter: <tomcat-users>
       block: |
         <role rolename = "admin-gui" />
         <role rolename = "manager-gui" />
