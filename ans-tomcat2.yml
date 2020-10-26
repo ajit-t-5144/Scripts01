@@ -69,7 +69,7 @@
   - name: change Tomcat service mode to 0755
     file: path=/etc/systemd/system/tomcat.service mode=0755
   - name: edit tomcat user xml
-    file:
+    blockinfile:
       dest: /usr/local/apache-tomcat-8.5.49/conf/tomcat-users.xml
       insertafter: <tomcat-users>
       block: |
