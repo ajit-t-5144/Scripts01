@@ -1,0 +1,38 @@
+---
+- hosts: locathost
+  become: yes
+  tasks:
+  - name: Update and upgrade apt packages
+    apt:
+      upgrade: yes
+      update_cache: yes
+      cache_valid_time: 86400 #One day
+  - name: "Install Java"
+    apt:
+      name: openjdk-8-jdk
+      state: present
+- hosts: localhost
+  become: Yes
+  tasks:
+  - name: "Install tomcat to node 2 and 3"
+      get_url: url=https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.49/bin/apache-tomcat-8.5.49.tar.gz state=present
+	  dest:/temp/
+	  become: yes
+	  become_user: root
+  - name: " Copy tomcat to local"
+    command: cp -p /tmp/apache-tomcat-8.5.49.tar.gz
+  - name: "Install Tomcat"
+    unarchieve: 
+	  src: /tmp/apache-tomcat-8.5.49.tar.gz
+	  dest: /usr/local
+	  remote_src: yes
+	become: yes
+	become_user: root
+  - name: "Check Tomcat Service"
+    file: path = /etc/systemmd/system/tomcat.service
+	mode=755
+  - name: "Start tomcat"
+    systemd:
+	  name: tomcat.service
+	  state: started
+	  become: yes
