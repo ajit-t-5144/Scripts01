@@ -1,5 +1,5 @@
 ---
-- hosts: localhost
+- hosts: webservers
   become: yes
   tasks:
   - name: Update and upgrade apt packages
@@ -13,7 +13,7 @@
       state: present
 - 
   become: true
-  hosts: localhost
+  hosts: webservers
   tasks:
   - name: add group "tomcat"
     group: name=tomcat
@@ -71,11 +71,14 @@
   - name: edit tomcat user xml
     blockinfile:
       dest: /usr/local/apache-tomcat-8.5.49/conf/tomcat-users.xml
-      insertafter: <tomcat-users>
+      insertbefore: </tomcat-users>
       block: |
-        <role rolename = "admin-gui" />
-        <role rolename = "manager-gui" />
-        <user username = "tomcat" password = "tomcat" roles = "admin-gui, manager-gui" />
+        <role rolename="manager"/>
+        <role rolename="manager-gui"/>
+        <role rolename="manager-script"/>
+        <role rolename="manager-jmx"/>
+        <role rolename="manager-status"/>
+        <user username="tomcat" password="tomcat" roles="admin, manager,admin-script,manager-script,manager-jmx,manager-status,manager-gui,admingui"/>
   - name: start tomcat service
     systemd:
       name: tomcat.service
