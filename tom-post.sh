@@ -3,4 +3,4 @@ wget https://raw.githubusercontent.com/devopsbc01/Scripts/master/Postgresql-Inst
 sudo apt update
 sudo apt upgrade
 bash tomcat.sh
-bash Postgresql Install 1.sh
+bash Postgresql-Install-1.sh
